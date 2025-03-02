@@ -1,0 +1,203 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+:root {
+    --primary-color: #5a7a94;
+    --secondary-color: #b7c4cf;
+    --dark-color: #2c3e50;
+    --light-color: #f5f5f5;
+    --accent-color: #8ac6d1;
+    --danger-color: #e74c3c;
+    --success-color: #58b368;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f9f9f9;
+    color: var(--dark-color);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-image: radial-gradient(circle at top right, rgba(138, 198, 209, 0.1), transparent 70%),
+                      radial-gradient(circle at bottom left, rgba(90, 122, 148, 0.1), transparent 70%);
+}
+
+.container {
+    width: 100%;
+    max-width: 600px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    padding: 30px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+h1 {
+    color: var(--primary-color);
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.subtitle {
+    color: var(--secondary-color);
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.input-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 10px;
+    margin-bottom: 30px;
+}
+
+input {
+    padding: 12px 15px;
+    border: 1px solid var(--secondary-color);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(138, 198, 209, 0.3);
+}
+
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-btn {
+    background-color: var(--primary-color);
+    color: white;
+    grid-column: span 2;
+}
+
+.add-btn:hover {
+    background-color: #4a6980;
+}
+
+.task-container {
+    margin-top: 20px;
+}
+
+h2 {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+#taskList {
+    list-style-type: none;
+    margin-bottom: 30px;
+}
+
+#taskList li {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+}
+
+#taskList li:hover {
+    background-color: #f8f8f8;
+}
+
+.task {
+    flex: 1;
+    word-break: break-word;
+}
+
+.reminder {
+    margin: 0 15px;
+    color: var(--secondary-color);
+    font-size: 0.85rem;
+}
+
+input[type="checkbox"] {
+    margin-left: 10px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+input[type="checkbox"]:checked + .task {
+    text-decoration: line-through;
+    color: var(--secondary-color);
+}
+
+.zen-btn {
+    background-color: var(--accent-color);
+    color: white;
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.zen-btn:hover {
+    background-color: #79b5c0;
+}
+
+.small-text {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+footer {
+    text-align: center;
+    margin-top: 30px;
+    color: var(--secondary-color);
+    font-size: 0.8rem;
+}
+
+/* Styles for completed tasks */
+#taskList li:has(input:checked) {
+    background-color: #f9f9f9;
+    opacity: 0.8;
+}
+
+/* Media queries for responsive design */
+@media (max-width: 500px) {
+    .input-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .add-btn {
+        grid-column: span 1;
+    }
+}
