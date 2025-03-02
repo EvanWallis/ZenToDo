@@ -48,7 +48,7 @@ const zenQuotes = [
     "What is the sound of one hand clapping?",
     "Great doubt, great enlightenment. Small doubt, small enlightenment. No doubt, no enlightenment.",
     "I have nothing to say, and I am saying it.",
-    "You are free to do as you wish, but you are not free to wish as you wish."
+    "You are free to do as you wish, but you are not free to wish as you wish.",
     "The mind is like water—still when calm, turbulent when disturbed.",
     "Walk as if you are kissing the Earth with your feet.",
     "In the midst of movement and chaos, keep stillness inside of you.",
