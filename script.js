@@ -156,7 +156,6 @@ const zenQuotes = [
 
 function addTask() {
     const taskInput = document.getElementById('taskInput').value;
-    const reminderTime = document.getElementById('reminderText').value;
     
     if (!taskInput.trim()) {
         alert("Please enter a task");
@@ -166,7 +165,6 @@ function addTask() {
     const li = document.createElement('li');
     li.innerHTML = `
         <span class="task">${taskInput}</span>
-        <span class="reminder">${reminderTime ? 'Reminder: ' + reminderTime : 'No reminder'}</span>
         <input type="checkbox">
     `;
     
@@ -175,7 +173,6 @@ function addTask() {
     
     document.getElementById('taskList').appendChild(li);
     document.getElementById('taskInput').value = '';
-    document.getElementById('reminderText').value = '';
     
     saveTasks();
 }
@@ -204,9 +201,8 @@ function saveTasks() {
     const tasks = [];
     document.querySelectorAll('#taskList li').forEach(li => {
         const task = li.querySelector('.task').textContent;
-        const reminder = li.querySelector('.reminder').textContent;
         const done = li.querySelector('input').checked;
-        tasks.push({ task: task, reminder: reminder, done: done });
+        tasks.push({ task: task, done: done });
     });
     localStorage.setItem('tasks', JSON.stringify(tasks));
 }
@@ -221,7 +217,6 @@ function loadTasks() {
         const li = document.createElement('li');
         li.innerHTML = `
             <span class="task">${taskObj.task}</span>
-            <span class="reminder">${taskObj.reminder}</span>
             <input type="checkbox"${taskObj.done ? ' checked' : ''}>
         `;
         
@@ -232,63 +227,6 @@ function loadTasks() {
     });
 }
 
-function parseReminderTime(reminderText) {
-    if (!reminderText || reminderText === 'No reminder') return null;
-    
-    if (reminderText.includes(' ')) {
-        const [time, period] = reminderText.split(' ');
-        let [hours, minutes] = time.split(':').map(Number);
-        
-        if (isNaN(hours) || isNaN(minutes)) return null;
-        if (hours < 0 || hours > 12 || minutes < 0 || minutes > 59) return null;
-        
-        if (period === 'PM' && hours < 12) hours += 12;
-        if (period === 'AM' && hours === 12) hours = 0;
-        
-        return { hours, minutes };
-    } 
-    else {
-        let [hours, minutes] = reminderText.split(':').map(Number);
-        
-        if (isNaN(hours) || isNaN(minutes)) return null;
-        if (hours < 0 || hours >= 24 || minutes < 0 || minutes > 59) return null;
-        
-        return { hours, minutes };
-    }
-}
-
-function checkReminders() {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    
-    const tasks = document.querySelectorAll('#taskList li');
-    tasks.forEach(task => {
-        const reminderText = task.querySelector('.reminder').textContent.replace('Reminder: ', '');
-        const reminder = parseReminderTime(reminderText);
-        
-        if (reminder && reminder.hours === currentHour && reminder.minutes === currentMinute) {
-            const taskName = task.querySelector('.task').textContent;
-            
-            if (Notification.permission === 'granted') {
-                new Notification(`Reminder: ${taskName}`);
-            } else {
-                alert(`Reminder: ${taskName}`);
-            }
-        }
-    });
-}
-
-function requestNotificationPermission() {
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-        Notification.requestPermission().then(permission => {
-            console.log('Notification permission:', permission);
-        });
-    }
-}
-
-setInterval(checkReminders, 60000);
-
 document.addEventListener('DOMContentLoaded', function() {
     loadTasks();
     
@@ -297,8 +235,4 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const zenButton = document.querySelector('.zen-btn');
     zenButton.addEventListener('click', clearDoneTasks);
-    
-    if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-        console.log('Tip: Enable notifications for task reminders');
-    }
 });
