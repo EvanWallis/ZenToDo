@@ -151,7 +151,8 @@ const zenQuotes = [
     "Two monks argued about a flag waving. One said the wind moves it, the other said the flag moves. The master said, 'Your mind moves.'",
     "A student said, 'I have been searching for the truth my whole life.' The master poured him more tea.",
     "The more you say, the less I hear.",
-    "Silence is the most eloquent response."
+    "Silence is the most eloquent response.",
+    "The present moment is all that is."
 ];
 
 function addTask() {
