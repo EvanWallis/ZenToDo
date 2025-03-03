@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
 :root {
     --primary-color: #5a7a94;
     --secondary-color: #b7c4cf;
@@ -10,16 +11,19 @@
     --shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
     --transition: all 0.3s ease;
 }
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
+
 html, body {
     overflow-x: hidden;
     width: 100%;
     position: relative;
 }
+
 body {
     font-family: 'Poppins', sans-serif;
     background-color: #f9f9f9;
@@ -34,6 +38,7 @@ body {
         radial-gradient(circle at top right, rgba(138, 198, 209, 0.2), transparent 70%),
         radial-gradient(circle at bottom left, rgba(90, 122, 148, 0.2), transparent 70%);
 }
+
 .container {
     width: 100%;
     max-width: 800px;
@@ -45,11 +50,13 @@ body {
     margin: 0 auto;
     transition: var(--transition);
 }
+
 header {
     text-align: center;
     margin-bottom: 35px;
     position: relative;
 }
+
 h1 {
     color: var(--primary-color);
     margin-bottom: 10px;
@@ -57,18 +64,21 @@ h1 {
     letter-spacing: 1px;
     font-size: 2.2rem;
 }
+
 .subtitle {
     color: var(--secondary-color);
     font-size: 1rem;
     letter-spacing: 0.5px;
 }
+
 .input-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-gap: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
     margin-bottom: 35px;
     width: 100%;
 }
+
 input {
     padding: 14px 18px;
     border: 1px solid var(--secondary-color);
@@ -78,11 +88,13 @@ input {
     transition: var(--transition);
     width: 100%;
 }
+
 input:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(138, 198, 209, 0.3);
 }
+
 .btn {
     padding: 14px 22px;
     border: none;
@@ -97,27 +109,32 @@ input:focus {
     justify-content: center;
     width: 100%;
 }
+
 .btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
+
 .btn:active {
     transform: translateY(0);
 }
+
 .add-btn {
     background-color: var(--primary-color);
     color: white;
-    grid-column: span 2;
     font-weight: 600;
     letter-spacing: 0.5px;
 }
+
 .add-btn:hover {
     background-color: #4a6980;
 }
+
 .task-container {
     margin-top: 25px;
     width: 100%;
 }
+
 h2 {
     font-size: 1.3rem;
     color: var(--primary-color);
@@ -126,12 +143,14 @@ h2 {
     padding-bottom: 8px;
     border-bottom: 2px solid rgba(90, 122, 148, 0.1);
 }
+
 #taskList {
     list-style-type: none;
     margin-bottom: 35px;
     width: 100%;
     min-height: 50px;
 }
+
 #taskList:empty::before {
     content: "No tasks yet—add one to get started!";
     color: var(--secondary-color);
@@ -142,6 +161,7 @@ h2 {
     background-color: #f9f9f9;
     border-radius: 8px;
 }
+
 #taskList li {
     padding: 16px;
     margin-bottom: 12px;
@@ -155,25 +175,18 @@ h2 {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     width: 100%;
 }
+
 #taskList li:hover {
     background-color: #f5f5f5;
     transform: translateX(3px);
 }
+
 .task {
     flex: 1;
     word-break: break-word;
     padding: 0 10px;
 }
-.reminder {
-    margin: 0 15px;
-    color: var(--accent-color);
-    font-size: 0.85rem;
-    font-weight: 500;
-    padding: 3px 8px;
-    background-color: rgba(138, 198, 209, 0.1);
-    border-radius: 4px;
-    white-space: nowrap;
-}
+
 input[type="checkbox"] {
     margin-right: 12px;
     width: 20px;
@@ -187,9 +200,11 @@ input[type="checkbox"] {
     position: relative;
     background-color: white;
 }
+
 input[type="checkbox"]:checked {
     background-color: var(--accent-color);
 }
+
 input[type="checkbox"]:checked::after {
     content: '✓';
     position: absolute;
@@ -199,10 +214,12 @@ input[type="checkbox"]:checked::after {
     left: 50%;
     transform: translate(-50%, -50%);
 }
+
 input[type="checkbox"]:checked + .task {
     text-decoration: line-through;
     color: var(--secondary-color);
 }
+
 .zen-btn {
     background-color: var(--accent-color);
     color: white;
@@ -216,14 +233,17 @@ input[type="checkbox"]:checked + .task {
     font-weight: 500;
     letter-spacing: 0.5px;
 }
+
 .zen-btn:hover {
     background-color: #79b5c0;
 }
+
 .small-text {
     font-size: 0.8rem;
     opacity: 0.9;
     margin-top: 4px;
 }
+
 footer {
     text-align: center;
     margin-top: 40px;
@@ -233,13 +253,15 @@ footer {
     padding-top: 20px;
     border-top: 1px solid rgba(183, 196, 207, 0.3);
 }
-/* Styles for completed tasks */
+
+/* Completed tasks style */
 #taskList li:has(input:checked) {
     background-color: #f9f9f9;
     opacity: 0.8;
     border-left-color: var(--secondary-color);
 }
-/* Media queries for responsive design */
+
+/* Responsive adjustments */
 @media (max-width: 850px) {
     .container {
         max-width: 90%;
@@ -257,12 +279,7 @@ footer {
 }
 
 @media (max-width: 500px) {
-    .input-group {
-        grid-template-columns: 1fr;
-    }
-    
     .add-btn {
-        grid-column: span 1;
         margin-top: 5px;
     }
     
@@ -286,11 +303,5 @@ footer {
     #taskList li {
         padding: 12px;
         flex-wrap: wrap;
-    }
-    
-    .reminder {
-        margin-top: 5px;
-        margin-left: 32px;
-        font-size: 0.8rem;
     }
 }
