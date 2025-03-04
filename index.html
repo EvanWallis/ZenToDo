@@ -11,6 +11,10 @@
     <header>
       <h1>Zen To-Do</h1>
       <p class="subtitle">Mindful task management</p>
+      <div class="auth-container">
+        <button id="signInBtn" class="btn">Sign In with Google</button>
+        <button id="signOutBtn" class="btn" style="display: none;">Sign Out</button>
+      </div>
     </header>
     
     <div class="input-group">
@@ -36,9 +40,10 @@
     </footer>
   </div>
 
-  <!-- 1) Load the compat (non-module) versions of Firebase App & Firestore -->
+  <!-- 1) Load the compat (non-module) versions of Firebase App, Firestore, and Auth -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <!-- 2) Firebase config and initialization -->
   <script>
@@ -55,8 +60,9 @@
     // Initialize Firebase (compat style)
     firebase.initializeApp(firebaseConfig);
 
-    // Initialize Firestore (compat style)
+    // Initialize Firestore (compat style) and Auth
     const db = firebase.firestore();
+    const auth = firebase.auth();
   </script>
 
   <!-- 3) Your main JavaScript file -->

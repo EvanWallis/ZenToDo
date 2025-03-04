@@ -177,12 +177,11 @@ const FEATURE_PROBABILITIES = {
     "Action and inaction are one and the same."
   ];
   
-  // ===========================
-  // Utility Functions
-  // ===========================
-  
-  // Format a Date object as MM/DD/YYYY
-  function formatDateObj(dateObj) {
+  /********************************************************
+ * Utility Functions
+ ********************************************************/
+// Format a Date object as MM/DD/YYYY
+function formatDateObj(dateObj) {
     const month = dateObj.getMonth() + 1;
     const day = dateObj.getDate();
     const year = dateObj.getFullYear();
@@ -198,15 +197,58 @@ const FEATURE_PROBABILITIES = {
     return `${year}-${month}-${day}`;
   }
   
-  // ===========================
-  // Zen Task Manager (Firestore Version)
-  // ===========================
+  /********************************************************
+   * Zen Task Manager (with Firestore + Auth)
+   ********************************************************/
   class ZenTaskManager {
     constructor() {
+      this.initAuth();
       this.initEventListeners();
     }
   
-    // Validate user input for new tasks
+    /********************************************************
+     * AUTHENTICATION
+     ********************************************************/
+    initAuth() {
+      // Sign in with Google popup
+      document.getElementById("signInBtn").addEventListener("click", () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().signInWithPopup(provider)
+          .catch(err => {
+            console.error("Sign-in failed:", err);
+            alert("Sign-in failed!");
+          });
+      });
+  
+      // Sign out
+      document.getElementById("signOutBtn").addEventListener("click", () => {
+        firebase.auth().signOut()
+          .catch(err => {
+            console.error("Sign-out failed:", err);
+            alert("Sign-out failed!");
+          });
+      });
+  
+      // Listen for auth changes
+      firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+          console.log("User signed in:", user.uid);
+          document.getElementById("signInBtn").style.display = "none";
+          document.getElementById("signOutBtn").style.display = "inline-block";
+          this.loadTasksForUser(user.uid);
+        } else {
+          console.log("No user signed in.");
+          document.getElementById("signInBtn").style.display = "inline-block";
+          document.getElementById("signOutBtn").style.display = "none";
+          // Clear tasks from UI
+          document.getElementById("taskList").innerHTML = "";
+        }
+      });
+    }
+  
+    /********************************************************
+     * VALIDATION
+     ********************************************************/
     validateTask(taskText, dueDateInput) {
       if (!taskText.trim()) {
         throw new Error("Please enter a task");
@@ -219,15 +261,16 @@ const FEATURE_PROBABILITIES = {
       }
     }
   
-    // ===========================
-    // Firestore CRUD Operations
-    // ===========================
-  
-    // Add a task document to Firestore
-    async addTaskToFirestore(taskObj) {
+    /********************************************************
+     * FIRESTORE CRUD OPERATIONS
+     ********************************************************/
+    // Add a new task doc for the current user
+    async addTaskToFirestore(userId, taskObj) {
       try {
-        const docRef = await db.collection("tasks").add(taskObj);
-        // docRef.id is the unique ID in Firestore
+        const docRef = await db.collection("tasks").add({
+          ...taskObj,
+          userId: userId
+        });
         return docRef.id;
       } catch (error) {
         console.error("Error adding task to Firestore:", error);
@@ -236,10 +279,14 @@ const FEATURE_PROBABILITIES = {
       }
     }
   
-    // Fetch all tasks from Firestore
-    async fetchTasksFromFirestore() {
+    // Fetch tasks for a specific user
+    async fetchTasksFromFirestore(userId) {
       try {
-        const snapshot = await db.collection("tasks").get();
+        // Only load tasks for this user
+        const snapshot = await db.collection("tasks")
+          .where("userId", "==", userId)
+          .get();
+  
         const tasks = [];
         snapshot.forEach(doc => {
           tasks.push({ ...doc.data(), firestoreId: doc.id });
@@ -252,7 +299,7 @@ const FEATURE_PROBABILITIES = {
       }
     }
   
-    // Update a task's "done" status in Firestore
+    // Update a task's "done" status
     async updateTaskStatusInFirestore(firestoreId, done) {
       try {
         await db.collection("tasks").doc(firestoreId).update({ done: done });
@@ -270,12 +317,17 @@ const FEATURE_PROBABILITIES = {
       }
     }
   
-    // ===========================
-    // Zen Logic
-    // ===========================
-  
+    /********************************************************
+     * ZEN LOGIC
+     ********************************************************/
     // Add a new task (UI + Firestore)
     async addTask() {
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        alert("You must be signed in to add tasks!");
+        return;
+      }
+  
       const taskInputField = document.getElementById("taskInput");
       const dueDateField = document.getElementById("dueDateInput");
   
@@ -286,7 +338,7 @@ const FEATURE_PROBABILITIES = {
         // Validate user input
         this.validateTask(taskText, dueDateInput);
   
-        // Fix for time zone offset: parse date with "T12:00:00"
+        // Fix for time zone offset
         let dueDateObj = new Date(dueDateInput + "T12:00:00");
         let today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -304,7 +356,7 @@ const FEATURE_PROBABILITIES = {
         };
   
         // Add to Firestore
-        const firestoreId = await this.addTaskToFirestore(newTask);
+        const firestoreId = await this.addTaskToFirestore(user.uid, newTask);
         if (!firestoreId) return; // If adding failed
   
         // Render the task in the UI
@@ -343,7 +395,7 @@ const FEATURE_PROBABILITIES = {
                   dueDate: dueDateInput,
                   createdAt: createdAt
                 };
-                const ghostId = await this.addTaskToFirestore(ghostTask);
+                const ghostId = await this.addTaskToFirestore(user.uid, ghostTask);
                 if (!ghostId) return;
                 this.renderTask({ ...ghostTask, firestoreId: ghostId });
                 alert("You thought it was gone, but was it ever truly finished?");
@@ -355,6 +407,7 @@ const FEATURE_PROBABILITIES = {
         // Clear input fields
         taskInputField.value = "";
         dueDateField.value = getTodayDateString();
+  
       } catch (error) {
         alert(error.message);
       }
@@ -392,13 +445,13 @@ const FEATURE_PROBABILITIES = {
       document.getElementById("taskList").appendChild(li);
     }
   
-    // Load tasks from Firestore and render them
-    async loadTasks() {
+    // Load tasks for the signed-in user
+    async loadTasksForUser(userId) {
       const taskList = document.getElementById("taskList");
       taskList.innerHTML = "";
   
-      // Get tasks from Firestore
-      const tasks = await this.fetchTasksFromFirestore();
+      // Get tasks from Firestore for this user
+      const tasks = await this.fetchTasksFromFirestore(userId);
   
       // Sort by due date
       tasks.sort((a, b) => {
@@ -422,7 +475,8 @@ const FEATURE_PROBABILITIES = {
       }
   
       // Now re-fetch tasks if any were updated
-      const updatedTasks = await this.fetchTasksFromFirestore();
+      const updatedTasks = await this.fetchTasksFromFirestore(userId);
+  
       // Sort again
       updatedTasks.sort((a, b) => {
         return new Date(a.dueDate + "T12:00:00") - new Date(b.dueDate + "T12:00:00");
@@ -436,6 +490,12 @@ const FEATURE_PROBABILITIES = {
   
     // Clear done tasks from both UI and Firestore
     async clearDoneTasks() {
+      const user = firebase.auth().currentUser;
+      if (!user) {
+        alert("You must be signed in to use Zen Mode!");
+        return;
+      }
+  
       const tasks = document.querySelectorAll("#taskList li");
       let tasksRemoved = false;
   
@@ -459,17 +519,19 @@ const FEATURE_PROBABILITIES = {
       }
     }
   
-    // Initialize event listeners
+    /********************************************************
+     * Initialize event listeners
+     ********************************************************/
     initEventListeners() {
       document.addEventListener("DOMContentLoaded", () => {
         // Auto-fill today's date
         const dateInput = document.getElementById("dueDateInput");
         dateInput.value = getTodayDateString();
   
-        // Load tasks from Firestore
-        this.loadTasks();
+        // The tasks will load automatically once the user is signed in
+        // (via onAuthStateChanged in initAuth())
   
-        // Add button
+        // Add Task button
         const addButton = document.querySelector(".add-btn");
         addButton.addEventListener("click", () => this.addTask());
   
@@ -482,4 +544,3 @@ const FEATURE_PROBABILITIES = {
   
   // Instantiate the Zen Task Manager
   new ZenTaskManager();
-  
