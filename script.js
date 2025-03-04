@@ -1,4 +1,16 @@
-const zenQuotes = [
+// Configuration Constants
+const FEATURE_PROBABILITIES = {
+    NO_FUTURE_TASK: 0.3,
+    TASK_VANISH: 0.2,
+    ALREADY_DONE: 0.2,
+    WRONG_TASK: 0.2
+  };
+  
+  const VANISH_TIMES = [10000, 30000, 3600000, 86400000];
+  const MAX_TASK_LENGTH = 200;
+  
+  // Zen Quote Collections
+  const zenQuotes = [
     "Nothing is hidden.",
     "This moment is complete. Nothing needs to be added.",
     "Mountains are mountains, rivers are rivers. Then they are not. Then they are.",
@@ -153,107 +165,313 @@ const zenQuotes = [
     "The more you say, the less I hear.",
     "Silence is the most eloquent response.",
     "The present moment is all that is."
-];
-
-function addTask() {
-    const taskInput = document.getElementById('taskInput').value;
-    const dueDateInput = document.getElementById('dueDateInput').value;
-    
-    if (!taskInput.trim()) {
-        alert("Please enter a task");
-        return;
+  ];
+  
+  const alreadyDoneQuotes = [
+    "Before you even wrote it down, it was finished.",
+    "What needed doing was already done.",
+    "The task was never separate from you.",
+    "Action and inaction are one and the same."
+  ];
+  
+  const noFutureQuotes = [
+    "Tomorrow is a dream.",
+    "When it is time, it will happen.",
+    "The future does not exist.",
+    "What is to come is already now."
+  ];
+  
+  const futureTaskQuotes = [
+    "You are already starting or not at all.",
+    "Planning is dreaming."
+  ];
+  
+  const subtleTaskVariants = [
+    "Go near the gym",
+    "Text Mom",
+    "Pick up something random at the store"
+  ];
+  
+  const fullTaskVariants = [
+    "Go to the park",
+    "Forget your essay",
+    "Call yourself",
+    "Embrace stillness",
+    "Sit and breathe",
+    "Listen to silence"
+  ];
+  
+  const wrongTaskQuotes = [
+    "Who decided this was the right task?",
+    "Perhaps you had it backwards.",
+    "A small shift changes everything.",
+    "The illusion of control fades away."
+  ];
+  
+  const futureKeywords = ["plan", "start", "future", "tomorrow", "later", "schedule"];
+  
+  // Zen Task Manager with Philosophical Twists
+  
+  class ZenTaskManager {
+    constructor() {
+      this.initEventListeners();
+      this.loadTasks();
     }
-    
-    if (!dueDateInput) {
-        alert("Please enter a due date");
-        return;
+  
+    // Safe local storage operation wrapper
+    safeLocalStorageOperation(operation) {
+      try {
+        return operation();
+      } catch (error) {
+        console.error('Local Storage Error:', error);
+        alert('There was an issue saving/loading tasks. Please try again.');
+        return null;
+      }
     }
-    
-    // Create new list item with checkbox and a container for text and due date.
-    const li = document.createElement('li');
-    li.setAttribute('data-due-date', dueDateInput);
-    li.innerHTML = `
-        <input type="checkbox">
-        <div class="task-info">
-            <span class="task">${taskInput}</span>
-            <span class="due-date">Due: ${new Date(dueDateInput).toLocaleDateString()}</span>
-        </div>
-    `;
-    
-    const checkbox = li.querySelector('input[type="checkbox"]');
-    checkbox.addEventListener('change', saveTasks);
-    
-    document.getElementById('taskList').appendChild(li);
-    document.getElementById('taskInput').value = '';
-    document.getElementById('dueDateInput').value = '';
-    
-    saveTasks();
-}
-
-function clearDoneTasks() {
-    const tasks = document.querySelectorAll('#taskList li');
-    let tasksRemoved = false;
-    
-    tasks.forEach(task => {
-        if (task.querySelector('input[type="checkbox"]').checked) {
-            task.remove();
-            tasksRemoved = true;
+  
+    // Validate task input
+    validateTask(taskText, dueDateInput) {
+      if (!taskText.trim()) {
+        throw new Error("Please enter a task");
+      }
+      
+      if (!dueDateInput) {
+        throw new Error("Please enter a due date");
+      }
+      
+      if (taskText.length > MAX_TASK_LENGTH) {
+        throw new Error(`Task must be under ${MAX_TASK_LENGTH} characters`);
+      }
+    }
+  
+    // Remove task by creation timestamp
+    removeTaskByCreatedAt(createdAt) {
+      this.safeLocalStorageOperation(() => {
+        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        tasks = tasks.filter(t => t.createdAt !== createdAt.toString());
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+      });
+      this.loadTasks();
+    }
+  
+    // Re-add a previously removed task
+    reAddTask(taskObj) {
+      this.safeLocalStorageOperation(() => {
+        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        tasks.push(taskObj);
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+      });
+      this.loadTasks();
+    }
+  
+    // Modify task based on Zen-inspired logic
+    modifyTask(taskText) {
+      const wrongChance = Math.random();
+      
+      if (wrongChance < FEATURE_PROBABILITIES.WRONG_TASK / 2) {
+        // 10% chance for a subtle change
+        return subtleTaskVariants[Math.floor(Math.random() * subtleTaskVariants.length)];
+      } else if (wrongChance < FEATURE_PROBABILITIES.WRONG_TASK) {
+        // Additional 10% chance for a complete flip
+        return fullTaskVariants[Math.floor(Math.random() * fullTaskVariants.length)];
+      }
+      
+      return taskText;
+    }
+  
+    // Add a new task
+    addTask() {
+      const taskInputField = document.getElementById('taskInput');
+      const dueDateField = document.getElementById('dueDateInput');
+      let taskText = taskInputField.value;
+      const dueDateInput = dueDateField.value;
+      
+      try {
+        // Validate input
+        this.validateTask(taskText, dueDateInput);
+        
+        // Check for No Future Feature based on due date
+        let today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let dueDateObj = new Date(dueDateInput);
+        
+        if (dueDateObj > today) {
+          const noFutureQuote = noFutureQuotes[Math.floor(Math.random() * noFutureQuotes.length)];
+          alert(noFutureQuote);
+          return;
         }
-    });
-    
-    if (tasksRemoved) {
-        saveTasks();
-        const randomQuote = zenQuotes[Math.floor(Math.random() * zenQuotes.length)];
-        alert(randomQuote);
-    } else {
-        alert("No completed tasks to clear");
-    }
-}
-
-function saveTasks() {
-    const tasks = [];
-    document.querySelectorAll('#taskList li').forEach(li => {
-        const task = li.querySelector('.task').textContent;
-        const done = li.querySelector('input[type="checkbox"]').checked;
-        const dueDate = li.getAttribute('data-due-date');
-        tasks.push({ task: task, done: done, dueDate: dueDate });
-    });
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    loadTasks();
-}
-
-function loadTasks() {
-    const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-    
-    // Sort tasks by due date (earliest first)
-    tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-    
-    const taskList = document.getElementById('taskList');
-    taskList.innerHTML = '';
-    
-    tasks.forEach(taskObj => {
+        
+        // Additional No Future tweak: reject tasks that feel "future-oriented"
+        const isFutureOriented = futureKeywords.some(keyword => 
+          taskText.toLowerCase().includes(keyword)
+        );
+        
+        if (isFutureOriented && Math.random() < FEATURE_PROBABILITIES.NO_FUTURE_TASK) {
+          const futureQuote = futureTaskQuotes[Math.floor(Math.random() * futureTaskQuotes.length)];
+          alert(futureQuote);
+          return;
+        }
+        
+        // Modify task if needed
+        taskText = this.modifyTask(taskText);
+        
+        // Determine if task is already done
+        let alreadyDone = Math.random() < FEATURE_PROBABILITIES.ALREADY_DONE;
+        
+        // Record creation time
+        let createdAt = Date.now();
+        
+        // Create list item
         const li = document.createElement('li');
-        li.setAttribute('data-due-date', taskObj.dueDate);
+        li.setAttribute('data-due-date', dueDateInput);
+        li.setAttribute('data-created-at', createdAt);
         li.innerHTML = `
+          <input type="checkbox" ${alreadyDone ? 'checked' : ''}>
+          <div class="task-info">
+            <span class="task">${taskText}</span>
+            <span class="due-date">Due: ${dueDateObj.toLocaleDateString()}</span>
+          </div>
+        `;
+        
+        // Show "Already Done" quote if applicable
+        if (alreadyDone) {
+          const alreadyDoneQuote = alreadyDoneQuotes[Math.floor(Math.random() * alreadyDoneQuotes.length)];
+          alert(alreadyDoneQuote);
+        }
+        
+        // Append task to list
+        document.getElementById('taskList').appendChild(li);
+        
+        // Save tasks
+        this.saveTasks();
+        
+        // Vanishing Task Feature
+        if (Math.random() < FEATURE_PROBABILITIES.TASK_VANISH) {
+          const vanishTime = VANISH_TIMES[Math.floor(Math.random() * VANISH_TIMES.length)];
+          const ghost = Math.random() < 0.5;
+          
+          setTimeout(() => {
+            li.remove();
+            this.removeTaskByCreatedAt(createdAt);
+            
+            if (ghost) {
+              setTimeout(() => {
+                const taskObj = { 
+                  task: taskText, 
+                  done: alreadyDone, 
+                  dueDate: dueDateInput, 
+                  createdAt: createdAt.toString() 
+                };
+                this.reAddTask(taskObj);
+                alert("You thought it was gone, but was it ever truly finished?");
+              }, vanishTime);
+            }
+          }, vanishTime);
+        }
+        
+        // Clear input fields
+        taskInputField.value = '';
+        dueDateField.value = '';
+        
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+  
+    // Save tasks to local storage
+    saveTasks() {
+      this.safeLocalStorageOperation(() => {
+        const tasks = [];
+        document.querySelectorAll('#taskList li').forEach(li => {
+          const task = li.querySelector('.task').textContent;
+          const done = li.querySelector('input[type="checkbox"]').checked;
+          const dueDate = li.getAttribute('data-due-date');
+          const createdAt = li.getAttribute('data-created-at');
+          tasks.push({ task, done, dueDate, createdAt });
+        });
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+      });
+      this.loadTasks();
+    }
+  
+    // Load tasks from local storage
+    loadTasks() {
+      this.safeLocalStorageOperation(() => {
+        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        const now = Date.now();
+        
+        // Boost chance to mark old tasks as done
+        tasks = tasks.map(taskObj => {
+          if (!taskObj.done && now - Number(taskObj.createdAt) > 86400000) {
+            if (Math.random() < 0.3) {
+              taskObj.done = true;
+              const alreadyDoneQuote = alreadyDoneQuotes[Math.floor(Math.random() * alreadyDoneQuotes.length)];
+              alert(alreadyDoneQuote);
+            }
+          }
+          return taskObj;
+        });
+        
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        
+        // Sort tasks by due date
+        tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        
+        const taskList = document.getElementById('taskList');
+        taskList.innerHTML = '';
+        
+        tasks.forEach(taskObj => {
+          const li = document.createElement('li');
+          li.setAttribute('data-due-date', taskObj.dueDate);
+          li.setAttribute('data-created-at', taskObj.createdAt);
+          li.innerHTML = `
             <input type="checkbox" ${taskObj.done ? 'checked' : ''}>
             <div class="task-info">
-                <span class="task">${taskObj.task}</span>
-                <span class="due-date">Due: ${new Date(taskObj.dueDate).toLocaleDateString()}</span>
+              <span class="task">${taskObj.task}</span>
+              <span class="due-date">Due: ${new Date(taskObj.dueDate).toLocaleDateString()}</span>
             </div>
-        `;
-        const checkbox = li.querySelector('input[type="checkbox"]');
-        checkbox.addEventListener('change', saveTasks);
+          `;
+          
+          const checkbox = li.querySelector('input[type="checkbox"]');
+          checkbox.addEventListener('change', () => this.saveTasks());
+          
+          taskList.appendChild(li);
+        });
+      });
+    }
+  
+    // Initialize event listeners
+    initEventListeners() {
+      document.addEventListener('DOMContentLoaded', () => {
+        this.loadTasks();
         
-        taskList.appendChild(li);
-    });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    loadTasks();
-    
-    const addButton = document.querySelector('.add-btn');
-    addButton.addEventListener('click', addTask);
-    
-    const zenButton = document.querySelector('.zen-btn');
-    zenButton.addEventListener('click', clearDoneTasks);
-});
+        const addButton = document.querySelector('.add-btn');
+        addButton.addEventListener('click', () => this.addTask());
+        
+        const zenButton = document.querySelector('.zen-btn');
+        zenButton.addEventListener('click', () => {
+          const tasks = document.querySelectorAll('#taskList li');
+          let tasksRemoved = false;
+          
+          tasks.forEach(task => {
+            if (task.querySelector('input[type="checkbox"]').checked) {
+              task.remove();
+              tasksRemoved = true;
+            }
+          });
+          
+          if (tasksRemoved) {
+            this.saveTasks();
+            const randomQuote = zenQuotes[Math.floor(Math.random() * zenQuotes.length)];
+            alert(randomQuote);
+          } else {
+            alert("No completed tasks to clear");
+          }
+        });
+      });
+    }
+  }
+  
+  // Initialize the Zen Task Manager
+  new ZenTaskManager();
+  
