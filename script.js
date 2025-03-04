@@ -1,11 +1,12 @@
-// Configuration Constants
+// ===========================
 const FEATURE_PROBABILITIES = {
-    TASK_VANISH: 0.2,
-    ALREADY_DONE: 0.2
+    TASK_VANISH: 0.2,      // Base vanish chance for tasks due today or in the past
+    ALREADY_DONE: 0.2      // Chance a task is immediately done upon creation
   };
   
-  const VANISH_TIMES = [10000, 30000, 3600000, 86400000]; // 10 sec, 30 sec, 1 hr, 1 day
+  const VANISH_TIMES = [10000, 30000, 3600000, 86400000]; // 10s, 30s, 1hr, 1day
   const MAX_TASK_LENGTH = 200;
+  
   
   // Zen Quote Collections
   const zenQuotes = [
@@ -172,34 +173,34 @@ const FEATURE_PROBABILITIES = {
     "Action and inaction are one and the same."
   ];
   
-  const noFutureQuotes = [
-    "Tomorrow is a dream.",
-    "When it is time, it will happen.",
-    "The future does not exist.",
-    "What is to come is already now."
-  ];
+  // ===========================
+  // Utility Functions
+  // ===========================
   
-  const futureTaskQuotes = [
-    "You are already starting or not at all.",
-    "Planning is dreaming."
-  ];
+  // A helper function to format a Date object as MM/DD/YYYY
+  function formatDateObj(dateObj) {
+    // getMonth() is zero-based, so we add 1
+    const month = dateObj.getMonth() + 1;
+    const day = dateObj.getDate();
+    const year = dateObj.getFullYear();
+    return `${month < 10 ? '0' + month : month}/${day < 10 ? '0' + day : day}/${year}`;
+  }
   
-  const futureKeywords = ["plan", "start", "future", "tomorrow", "later", "schedule"];
-  
-  // Zen Task Manager with Philosophical Twists
+  // ===========================
+  // Zen Task Manager
+  // ===========================
   class ZenTaskManager {
     constructor() {
       this.initEventListeners();
-      this.loadTasks();
     }
   
-    // Wrapper for localStorage operations
+    // A safe wrapper for localStorage operations
     safeLocalStorageOperation(operation) {
       try {
         return operation();
       } catch (error) {
-        console.error('Local Storage Error:', error);
-        alert('There was an issue saving/loading tasks. Please try again.');
+        console.error("Local Storage Error:", error);
+        alert("There was an issue saving/loading tasks. Please try again.");
         return null;
       }
     }
@@ -217,30 +218,30 @@ const FEATURE_PROBABILITIES = {
       }
     }
   
-    // Remove task by creation timestamp
+    // Remove a task by creation timestamp
     removeTaskByCreatedAt(createdAt) {
       this.safeLocalStorageOperation(() => {
-        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
         tasks = tasks.filter(t => t.createdAt !== createdAt.toString());
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        localStorage.setItem("tasks", JSON.stringify(tasks));
       });
       this.loadTasks();
     }
   
-    // Re-add a previously removed task
+    // Re-add a previously removed task (ghost reappearance)
     reAddTask(taskObj) {
       this.safeLocalStorageOperation(() => {
-        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
         tasks.push(taskObj);
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        localStorage.setItem("tasks", JSON.stringify(tasks));
       });
       this.loadTasks();
     }
   
     // Add a new task
     addTask() {
-      const taskInputField = document.getElementById('taskInput');
-      const dueDateField = document.getElementById('dueDateInput');
+      const taskInputField = document.getElementById("taskInput");
+      const dueDateField = document.getElementById("dueDateInput");
       let taskText = taskInputField.value;
       const dueDateInput = dueDateField.value;
   
@@ -248,59 +249,65 @@ const FEATURE_PROBABILITIES = {
         // Validate input
         this.validateTask(taskText, dueDateInput);
   
-        let dueDateObj = new Date(dueDateInput);
+        // Fix for time zone offset: parse date with "T12:00:00"
+        // so that "2025-03-04" doesn't become the previous day if you're behind UTC
+        let dueDateObj = new Date(dueDateInput + "T12:00:00");
+  
+        // Check today's date at midnight
         let today = new Date();
         today.setHours(0, 0, 0, 0);
   
-        // Instead of rejecting future tasks, we now allow them.
-        // (Optionally, you could alert a Zen quote here if desired.)
-        // Also, if the due date is in the future, we'll increase the vanish chance.
-  
-        // Determine if task is already done (20% chance)
+        // 20% chance a new task is already done
         let alreadyDone = Math.random() < FEATURE_PROBABILITIES.ALREADY_DONE;
   
         // Record creation time
         let createdAt = Date.now();
   
         // Create list item
-        const li = document.createElement('li');
-        li.setAttribute('data-due-date', dueDateInput);
-        li.setAttribute('data-created-at', createdAt);
+        const li = document.createElement("li");
+        li.setAttribute("data-due-date", dueDateInput);
+        li.setAttribute("data-created-at", createdAt);
+  
         li.innerHTML = `
-          <input type="checkbox" ${alreadyDone ? 'checked' : ''}>
+          <input type="checkbox" ${alreadyDone ? "checked" : ""}>
           <div class="task-info">
             <span class="task">${taskText}</span>
-            <span class="due-date">Due: ${dueDateObj.toLocaleDateString()}</span>
+            <span class="due-date">Due: ${formatDateObj(dueDateObj)}</span>
           </div>
         `;
   
-        // Show "Already Done" quote if applicable
+        // If the task is "Already Done," show a quote
         if (alreadyDone) {
           const alreadyDoneQuote = alreadyDoneQuotes[Math.floor(Math.random() * alreadyDoneQuotes.length)];
           alert(alreadyDoneQuote);
         }
   
-        // Append task to list and save tasks
-        document.getElementById('taskList').appendChild(li);
+        // Append the new task to the list
+        document.getElementById("taskList").appendChild(li);
         this.saveTasks();
   
         // Vanishing Task Feature
-        // If the task is future-dated, increase vanish chance to 50%; otherwise use the default 20%
+        // If the due date is in the future, vanish chance is 50%, else 20%
         let vanishProbability = dueDateObj > today ? 0.5 : FEATURE_PROBABILITIES.TASK_VANISH;
         if (Math.random() < vanishProbability) {
+          // Random vanish time from the array
           const vanishTime = VANISH_TIMES[Math.floor(Math.random() * VANISH_TIMES.length)];
-          // 50% chance the task will vanish and then reappear as a "ghost"
+          // 50% chance of ghost reappearance
           const ghost = Math.random() < 0.5;
+  
           setTimeout(() => {
+            // Remove from DOM and local storage
             li.remove();
             this.removeTaskByCreatedAt(createdAt);
+  
+            // Ghost reappearance
             if (ghost) {
               setTimeout(() => {
-                const taskObj = { 
-                  task: taskText, 
-                  done: alreadyDone, 
-                  dueDate: dueDateInput, 
-                  createdAt: createdAt.toString() 
+                const taskObj = {
+                  task: taskText,
+                  done: alreadyDone,
+                  dueDate: dueDateInput,
+                  createdAt: createdAt.toString()
                 };
                 this.reAddTask(taskObj);
                 alert("You thought it was gone, but was it ever truly finished?");
@@ -310,8 +317,8 @@ const FEATURE_PROBABILITIES = {
         }
   
         // Clear input fields
-        taskInputField.value = '';
-        dueDateField.value = '';
+        taskInputField.value = "";
+        dueDateField.value = "";
       } catch (error) {
         alert(error.message);
       }
@@ -321,14 +328,14 @@ const FEATURE_PROBABILITIES = {
     saveTasks() {
       this.safeLocalStorageOperation(() => {
         const tasks = [];
-        document.querySelectorAll('#taskList li').forEach(li => {
-          const task = li.querySelector('.task').textContent;
-          const done = li.querySelector('input[type="checkbox"]').checked;
-          const dueDate = li.getAttribute('data-due-date');
-          const createdAt = li.getAttribute('data-created-at');
+        document.querySelectorAll("#taskList li").forEach(li => {
+          const task = li.querySelector(".task").textContent;
+          const done = li.querySelector("input[type='checkbox']").checked;
+          const dueDate = li.getAttribute("data-due-date");
+          const createdAt = li.getAttribute("data-created-at");
           tasks.push({ task, done, dueDate, createdAt });
         });
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        localStorage.setItem("tasks", JSON.stringify(tasks));
       });
       this.loadTasks();
     }
@@ -336,10 +343,10 @@ const FEATURE_PROBABILITIES = {
     // Load tasks from local storage
     loadTasks() {
       this.safeLocalStorageOperation(() => {
-        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
         const now = Date.now();
   
-        // For tasks older than 24 hours, boost chance to mark as done (30% chance)
+        // Any task older than 24 hours gets a 30% chance to auto-complete
         tasks = tasks.map(taskObj => {
           if (!taskObj.done && now - Number(taskObj.createdAt) > 86400000) {
             if (Math.random() < 0.3) {
@@ -350,27 +357,36 @@ const FEATURE_PROBABILITIES = {
           }
           return taskObj;
         });
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+  
+        localStorage.setItem("tasks", JSON.stringify(tasks));
   
         // Sort tasks by due date (earliest first)
-        tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        tasks.sort((a, b) => new Date(a.dueDate + "T12:00:00") - new Date(b.dueDate + "T12:00:00"));
   
-        const taskList = document.getElementById('taskList');
-        taskList.innerHTML = '';
+        const taskList = document.getElementById("taskList");
+        taskList.innerHTML = "";
   
         tasks.forEach(taskObj => {
-          const li = document.createElement('li');
-          li.setAttribute('data-due-date', taskObj.dueDate);
-          li.setAttribute('data-created-at', taskObj.createdAt);
+          const li = document.createElement("li");
+          li.setAttribute("data-due-date", taskObj.dueDate);
+          li.setAttribute("data-created-at", taskObj.createdAt);
+  
+          // Re-parse the date with "T12:00:00" for consistent formatting
+          let dateObj = new Date(taskObj.dueDate + "T12:00:00");
+          let isDone = taskObj.done ? "checked" : "";
+  
           li.innerHTML = `
-            <input type="checkbox" ${taskObj.done ? 'checked' : ''}>
+            <input type="checkbox" ${isDone}>
             <div class="task-info">
               <span class="task">${taskObj.task}</span>
-              <span class="due-date">Due: ${new Date(taskObj.dueDate).toLocaleDateString()}</span>
+              <span class="due-date">Due: ${formatDateObj(dateObj)}</span>
             </div>
           `;
-          const checkbox = li.querySelector('input[type="checkbox"]');
-          checkbox.addEventListener('change', () => this.saveTasks());
+  
+          // When the checkbox changes, re-save
+          const checkbox = li.querySelector("input[type='checkbox']");
+          checkbox.addEventListener("change", () => this.saveTasks());
+  
           taskList.appendChild(li);
         });
       });
@@ -378,20 +394,35 @@ const FEATURE_PROBABILITIES = {
   
     // Initialize event listeners
     initEventListeners() {
-      document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener("DOMContentLoaded", () => {
+        // Auto-fill today's date in the date picker
+        const dateInput = document.getElementById("dueDateInput");
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
+        dateInput.value = `${year}-${month}-${day}`;
+  
+        // Load tasks from storage
         this.loadTasks();
-        const addButton = document.querySelector('.add-btn');
-        addButton.addEventListener('click', () => this.addTask());
-        const zenButton = document.querySelector('.zen-btn');
-        zenButton.addEventListener('click', () => {
-          const tasks = document.querySelectorAll('#taskList li');
+  
+        // Add button
+        const addButton = document.querySelector(".add-btn");
+        addButton.addEventListener("click", () => this.addTask());
+  
+        // Zen Mode button (clears done tasks)
+        const zenButton = document.querySelector(".zen-btn");
+        zenButton.addEventListener("click", () => {
+          const tasks = document.querySelectorAll("#taskList li");
           let tasksRemoved = false;
+  
           tasks.forEach(task => {
-            if (task.querySelector('input[type="checkbox"]').checked) {
+            if (task.querySelector("input[type='checkbox']").checked) {
               task.remove();
               tasksRemoved = true;
             }
           });
+  
           if (tasksRemoved) {
             this.saveTasks();
             const randomQuote = zenQuotes[Math.floor(Math.random() * zenQuotes.length)];
@@ -404,5 +435,5 @@ const FEATURE_PROBABILITIES = {
     }
   }
   
-  // Initialize the Zen Task Manager
+  // Instantiate the Zen Task Manager
   new ZenTaskManager();
