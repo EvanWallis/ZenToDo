@@ -1,39 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zen To-Do</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zen To-Do</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Zen To-Do</h1> 
-            <p class="subtitle">Mindful task management</p>
-        </header>
-        
-        <div class="input-group">
-            <input type="text" id="taskInput" placeholder="Add a task...">
-            <button class="btn add-btn">Add Task</button>
-        </div>
-        
-        <div class="task-container">
-            <h2>Your Tasks</h2>
-            <ul id="taskList">
-                <!-- Tasks will be loaded here from local storage -->
-            </ul>
-            
-            <button class="btn zen-btn">
-                <span>Zen Mode</span>
-                <span class="small-text">(Clear Completed Tasks)</span>
-            </button>
-        </div>
-        
-        <footer>
-            <p>Find peace in completing one task at a time</p>
-        </footer>
+  <div class="container">
+    <header>
+      <h1>Zen To-Do</h1>
+      <p class="subtitle">Mindful task management</p>
+    </header>
+    
+    <!-- Updated input group with a due date field -->
+    <div class="input-group">
+      <input type="text" id="taskInput" placeholder="Add a task..." />
+      <input type="date" id="dueDateInput" />
+      <button class="btn add-btn">Add Task</button>
     </div>
-    <script src="script.js"></script>
+    
+    <div class="task-container">
+      <h2>Your Tasks</h2>
+      <ul id="taskList">
+        <!-- Tasks will be loaded here from local storage -->
+      </ul>
+      
+      <button class="btn zen-btn">
+        <span>Zen Mode</span>
+        <span class="small-text">(Clear Completed Tasks)</span>
+      </button>
+    </div>
+    
+    <footer>
+      <p>Find peace in completing one task at a time</p>
+    </footer>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>

@@ -157,16 +157,27 @@ const zenQuotes = [
 
 function addTask() {
     const taskInput = document.getElementById('taskInput').value;
+    const dueDateInput = document.getElementById('dueDateInput').value;
     
     if (!taskInput.trim()) {
         alert("Please enter a task");
         return;
     }
     
+    if (!dueDateInput) {
+        alert("Please enter a due date");
+        return;
+    }
+    
+    // Create new list item with checkbox and a container for text and due date.
     const li = document.createElement('li');
+    li.setAttribute('data-due-date', dueDateInput);
     li.innerHTML = `
-        <span class="task">${taskInput}</span>
         <input type="checkbox">
+        <div class="task-info">
+            <span class="task">${taskInput}</span>
+            <span class="due-date">Due: ${new Date(dueDateInput).toLocaleDateString()}</span>
+        </div>
     `;
     
     const checkbox = li.querySelector('input[type="checkbox"]');
@@ -174,6 +185,7 @@ function addTask() {
     
     document.getElementById('taskList').appendChild(li);
     document.getElementById('taskInput').value = '';
+    document.getElementById('dueDateInput').value = '';
     
     saveTasks();
 }
@@ -183,7 +195,7 @@ function clearDoneTasks() {
     let tasksRemoved = false;
     
     tasks.forEach(task => {
-        if (task.querySelector('input').checked) {
+        if (task.querySelector('input[type="checkbox"]').checked) {
             task.remove();
             tasksRemoved = true;
         }
@@ -202,25 +214,33 @@ function saveTasks() {
     const tasks = [];
     document.querySelectorAll('#taskList li').forEach(li => {
         const task = li.querySelector('.task').textContent;
-        const done = li.querySelector('input').checked;
-        tasks.push({ task: task, done: done });
+        const done = li.querySelector('input[type="checkbox"]').checked;
+        const dueDate = li.getAttribute('data-due-date');
+        tasks.push({ task: task, done: done, dueDate: dueDate });
     });
     localStorage.setItem('tasks', JSON.stringify(tasks));
+    loadTasks();
 }
 
 function loadTasks() {
     const tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
-    const taskList = document.getElementById('taskList');
     
+    // Sort tasks by due date (earliest first)
+    tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    
+    const taskList = document.getElementById('taskList');
     taskList.innerHTML = '';
     
     tasks.forEach(taskObj => {
         const li = document.createElement('li');
+        li.setAttribute('data-due-date', taskObj.dueDate);
         li.innerHTML = `
-            <span class="task">${taskObj.task}</span>
-            <input type="checkbox"${taskObj.done ? ' checked' : ''}>
+            <input type="checkbox" ${taskObj.done ? 'checked' : ''}>
+            <div class="task-info">
+                <span class="task">${taskObj.task}</span>
+                <span class="due-date">Due: ${new Date(taskObj.dueDate).toLocaleDateString()}</span>
+            </div>
         `;
-        
         const checkbox = li.querySelector('input[type="checkbox"]');
         checkbox.addEventListener('change', saveTasks);
         
