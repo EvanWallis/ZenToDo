@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Zen To-Do</title>
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -13,7 +13,6 @@
       <p class="subtitle">Mindful task management</p>
     </header>
     
-    <!-- Input group with task and due date -->
     <div class="input-group">
       <input type="text" id="taskInput" placeholder="Add a task..." />
       <input type="date" id="dueDateInput" />
@@ -37,15 +36,15 @@
     </footer>
   </div>
 
-  <!-- 1) Firebase SDKs from the CDN -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js"></script>
+  <!-- 1) Load the compat (non-module) versions of Firebase App & Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <!-- 2) Firebase configuration and initialization -->
+  <!-- 2) Firebase config and initialization -->
   <script>
-    // Paste your Firebase config values here:
+    // Your Firebase config
     const firebaseConfig = {
-      apiKey: "AIzaSyBWn5LK770Tw4F3rw5UduO1bW_gciyvoRg",
+      apiKey: "AIzaSyB...gciyvoRg",   // shortened for brevity
       authDomain: "zentodo-d442a.firebaseapp.com",
       projectId: "zentodo-d442a",
       storageBucket: "zentodo-d442a.appspot.com",
@@ -53,8 +52,10 @@
       appId: "1:387203957441:web:3811c117c4a2c5f9760a40"
     };
 
-    // Initialize Firebase and Firestore
+    // Initialize Firebase (compat style)
     firebase.initializeApp(firebaseConfig);
+
+    // Initialize Firestore (compat style)
     const db = firebase.firestore();
   </script>
 
