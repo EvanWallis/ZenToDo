@@ -1,4 +1,6 @@
 // ===========================
+// Configuration Constants
+// ===========================
 const FEATURE_PROBABILITIES = {
     TASK_VANISH: 0.2,      // Base vanish chance for tasks due today or in the past
     ALREADY_DONE: 0.2      // Chance a task is immediately done upon creation
@@ -7,8 +9,9 @@ const FEATURE_PROBABILITIES = {
   const VANISH_TIMES = [10000, 30000, 3600000, 86400000]; // 10s, 30s, 1hr, 1day
   const MAX_TASK_LENGTH = 200;
   
-  
+  // ===========================
   // Zen Quote Collections
+  // ===========================
   const zenQuotes = [
     "Nothing is hidden.",
     "This moment is complete. Nothing needs to be added.",
@@ -179,11 +182,18 @@ const FEATURE_PROBABILITIES = {
   
   // A helper function to format a Date object as MM/DD/YYYY
   function formatDateObj(dateObj) {
-    // getMonth() is zero-based, so we add 1
     const month = dateObj.getMonth() + 1;
     const day = dateObj.getDate();
     const year = dateObj.getFullYear();
     return `${month < 10 ? '0' + month : month}/${day < 10 ? '0' + day : day}/${year}`;
+  }
+  
+  function getTodayDateString() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
   
   // ===========================
@@ -242,6 +252,8 @@ const FEATURE_PROBABILITIES = {
     addTask() {
       const taskInputField = document.getElementById("taskInput");
       const dueDateField = document.getElementById("dueDateInput");
+  
+      // Get the values entered by the user:
       let taskText = taskInputField.value;
       const dueDateInput = dueDateField.value;
   
@@ -250,7 +262,6 @@ const FEATURE_PROBABILITIES = {
         this.validateTask(taskText, dueDateInput);
   
         // Fix for time zone offset: parse date with "T12:00:00"
-        // so that "2025-03-04" doesn't become the previous day if you're behind UTC
         let dueDateObj = new Date(dueDateInput + "T12:00:00");
   
         // Check today's date at midnight
@@ -282,25 +293,21 @@ const FEATURE_PROBABILITIES = {
           alert(alreadyDoneQuote);
         }
   
-        // Append the new task to the list
+        // Append the new task to the list and save tasks
         document.getElementById("taskList").appendChild(li);
         this.saveTasks();
   
-        // Vanishing Task Feature
+        // Vanishing Task Feature:
         // If the due date is in the future, vanish chance is 50%, else 20%
         let vanishProbability = dueDateObj > today ? 0.5 : FEATURE_PROBABILITIES.TASK_VANISH;
         if (Math.random() < vanishProbability) {
-          // Random vanish time from the array
           const vanishTime = VANISH_TIMES[Math.floor(Math.random() * VANISH_TIMES.length)];
-          // 50% chance of ghost reappearance
           const ghost = Math.random() < 0.5;
   
           setTimeout(() => {
-            // Remove from DOM and local storage
             li.remove();
             this.removeTaskByCreatedAt(createdAt);
   
-            // Ghost reappearance
             if (ghost) {
               setTimeout(() => {
                 const taskObj = {
@@ -316,9 +323,9 @@ const FEATURE_PROBABILITIES = {
           }, vanishTime);
         }
   
-        // Clear input fields
+        // Clear input fields: reset task text to blank and due date to today's date
         taskInputField.value = "";
-        dueDateField.value = "";
+        dueDateField.value = getTodayDateString();
       } catch (error) {
         alert(error.message);
       }
@@ -346,7 +353,7 @@ const FEATURE_PROBABILITIES = {
         let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
         const now = Date.now();
   
-        // Any task older than 24 hours gets a 30% chance to auto-complete
+        // For tasks older than 24 hours, boost chance to auto-complete (30% chance)
         tasks = tasks.map(taskObj => {
           if (!taskObj.done && now - Number(taskObj.createdAt) > 86400000) {
             if (Math.random() < 0.3) {
@@ -357,10 +364,9 @@ const FEATURE_PROBABILITIES = {
           }
           return taskObj;
         });
-  
         localStorage.setItem("tasks", JSON.stringify(tasks));
   
-        // Sort tasks by due date (earliest first)
+        // Sort tasks by due date (earliest first), using the "T12:00:00" fix for consistency
         tasks.sort((a, b) => new Date(a.dueDate + "T12:00:00") - new Date(b.dueDate + "T12:00:00"));
   
         const taskList = document.getElementById("taskList");
@@ -371,7 +377,6 @@ const FEATURE_PROBABILITIES = {
           li.setAttribute("data-due-date", taskObj.dueDate);
           li.setAttribute("data-created-at", taskObj.createdAt);
   
-          // Re-parse the date with "T12:00:00" for consistent formatting
           let dateObj = new Date(taskObj.dueDate + "T12:00:00");
           let isDone = taskObj.done ? "checked" : "";
   
@@ -383,7 +388,6 @@ const FEATURE_PROBABILITIES = {
             </div>
           `;
   
-          // When the checkbox changes, re-save
           const checkbox = li.querySelector("input[type='checkbox']");
           checkbox.addEventListener("change", () => this.saveTasks());
   
@@ -437,3 +441,4 @@ const FEATURE_PROBABILITIES = {
   
   // Instantiate the Zen Task Manager
   new ZenTaskManager();
+  
