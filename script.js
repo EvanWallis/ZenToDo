@@ -2,12 +2,13 @@
 // Configuration Constants
 // ===========================
 const FEATURE_PROBABILITIES = {
-    TASK_VANISH: 0.2,      // Base vanish chance for tasks due today or in the past
-    ALREADY_DONE: 0.2      // Chance a task is immediately done upon creation
+    TASK_VANISH: 0.2,  // Base vanish chance for tasks due today or in the past
+    ALREADY_DONE: 0.2  // Chance a task is immediately done upon creation
   };
   
   const VANISH_TIMES = [10000, 30000, 3600000, 86400000]; // 10s, 30s, 1hr, 1day
   const MAX_TASK_LENGTH = 200;
+  
   
   // ===========================
   // Zen Quote Collections
@@ -180,7 +181,7 @@ const FEATURE_PROBABILITIES = {
   // Utility Functions
   // ===========================
   
-  // A helper function to format a Date object as MM/DD/YYYY
+  // Format a Date object as MM/DD/YYYY
   function formatDateObj(dateObj) {
     const month = dateObj.getMonth() + 1;
     const day = dateObj.getDate();
@@ -188,6 +189,7 @@ const FEATURE_PROBABILITIES = {
     return `${month < 10 ? '0' + month : month}/${day < 10 ? '0' + day : day}/${year}`;
   }
   
+  // Return today's date as YYYY-MM-DD (for <input type="date">)
   function getTodayDateString() {
     const today = new Date();
     const year = today.getFullYear();
@@ -197,25 +199,14 @@ const FEATURE_PROBABILITIES = {
   }
   
   // ===========================
-  // Zen Task Manager
+  // Zen Task Manager (Firestore Version)
   // ===========================
   class ZenTaskManager {
     constructor() {
       this.initEventListeners();
     }
   
-    // A safe wrapper for localStorage operations
-    safeLocalStorageOperation(operation) {
-      try {
-        return operation();
-      } catch (error) {
-        console.error("Local Storage Error:", error);
-        alert("There was an issue saving/loading tasks. Please try again.");
-        return null;
-      }
-    }
-  
-    // Validate task input
+    // Validate user input for new tasks
     validateTask(taskText, dueDateInput) {
       if (!taskText.trim()) {
         throw new Error("Please enter a task");
@@ -228,102 +219,140 @@ const FEATURE_PROBABILITIES = {
       }
     }
   
-    // Remove a task by creation timestamp
-    removeTaskByCreatedAt(createdAt) {
-      this.safeLocalStorageOperation(() => {
-        let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-        tasks = tasks.filter(t => t.createdAt !== createdAt.toString());
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-      });
-      this.loadTasks();
+    // ===========================
+    // Firestore CRUD Operations
+    // ===========================
+  
+    // Add a task document to Firestore
+    async addTaskToFirestore(taskObj) {
+      try {
+        const docRef = await db.collection("tasks").add(taskObj);
+        // docRef.id is the unique ID in Firestore
+        return docRef.id;
+      } catch (error) {
+        console.error("Error adding task to Firestore:", error);
+        alert("Failed to add task to Firestore. Check console for details.");
+        return null;
+      }
     }
   
-    // Re-add a previously removed task (ghost reappearance)
-    reAddTask(taskObj) {
-      this.safeLocalStorageOperation(() => {
-        let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-        tasks.push(taskObj);
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-      });
-      this.loadTasks();
+    // Fetch all tasks from Firestore
+    async fetchTasksFromFirestore() {
+      try {
+        const snapshot = await db.collection("tasks").get();
+        const tasks = [];
+        snapshot.forEach(doc => {
+          tasks.push({ ...doc.data(), firestoreId: doc.id });
+        });
+        return tasks;
+      } catch (error) {
+        console.error("Error fetching tasks from Firestore:", error);
+        alert("Failed to load tasks from Firestore. Check console for details.");
+        return [];
+      }
     }
   
-    // Add a new task
-    addTask() {
+    // Update a task's "done" status in Firestore
+    async updateTaskStatusInFirestore(firestoreId, done) {
+      try {
+        await db.collection("tasks").doc(firestoreId).update({ done: done });
+      } catch (error) {
+        console.error("Error updating task status in Firestore:", error);
+      }
+    }
+  
+    // Delete a task from Firestore
+    async deleteTaskFromFirestore(firestoreId) {
+      try {
+        await db.collection("tasks").doc(firestoreId).delete();
+      } catch (error) {
+        console.error("Error deleting task from Firestore:", error);
+      }
+    }
+  
+    // ===========================
+    // Zen Logic
+    // ===========================
+  
+    // Add a new task (UI + Firestore)
+    async addTask() {
       const taskInputField = document.getElementById("taskInput");
       const dueDateField = document.getElementById("dueDateInput");
   
-      // Get the values entered by the user:
       let taskText = taskInputField.value;
       const dueDateInput = dueDateField.value;
   
       try {
-        // Validate input
+        // Validate user input
         this.validateTask(taskText, dueDateInput);
   
         // Fix for time zone offset: parse date with "T12:00:00"
         let dueDateObj = new Date(dueDateInput + "T12:00:00");
-  
-        // Check today's date at midnight
         let today = new Date();
         today.setHours(0, 0, 0, 0);
   
-        // 20% chance a new task is already done
+        // 20% chance the task is immediately "done"
         let alreadyDone = Math.random() < FEATURE_PROBABILITIES.ALREADY_DONE;
-  
-        // Record creation time
         let createdAt = Date.now();
   
-        // Create list item
-        const li = document.createElement("li");
-        li.setAttribute("data-due-date", dueDateInput);
-        li.setAttribute("data-created-at", createdAt);
+        // Prepare the task object
+        const newTask = {
+          task: taskText,
+          done: alreadyDone,
+          dueDate: dueDateInput,
+          createdAt: createdAt
+        };
   
-        li.innerHTML = `
-          <input type="checkbox" ${alreadyDone ? "checked" : ""}>
-          <div class="task-info">
-            <span class="task">${taskText}</span>
-            <span class="due-date">Due: ${formatDateObj(dueDateObj)}</span>
-          </div>
-        `;
+        // Add to Firestore
+        const firestoreId = await this.addTaskToFirestore(newTask);
+        if (!firestoreId) return; // If adding failed
   
-        // If the task is "Already Done," show a quote
+        // Render the task in the UI
+        this.renderTask({
+          ...newTask,
+          firestoreId: firestoreId
+        });
+  
+        // "Already Done" quote if triggered
         if (alreadyDone) {
           const alreadyDoneQuote = alreadyDoneQuotes[Math.floor(Math.random() * alreadyDoneQuotes.length)];
           alert(alreadyDoneQuote);
         }
   
-        // Append the new task to the list and save tasks
-        document.getElementById("taskList").appendChild(li);
-        this.saveTasks();
-  
-        // Vanishing Task Feature:
-        // If the due date is in the future, vanish chance is 50%, else 20%
+        // Vanishing Task Feature
         let vanishProbability = dueDateObj > today ? 0.5 : FEATURE_PROBABILITIES.TASK_VANISH;
         if (Math.random() < vanishProbability) {
           const vanishTime = VANISH_TIMES[Math.floor(Math.random() * VANISH_TIMES.length)];
           const ghost = Math.random() < 0.5;
   
-          setTimeout(() => {
-            li.remove();
-            this.removeTaskByCreatedAt(createdAt);
+          setTimeout(async () => {
+            // Remove from DOM
+            const li = document.querySelector(`li[data-firestore-id='${firestoreId}']`);
+            if (li) li.remove();
   
+            // Remove from Firestore
+            await this.deleteTaskFromFirestore(firestoreId);
+  
+            // Ghost reappearance
             if (ghost) {
-              setTimeout(() => {
-                const taskObj = {
+              setTimeout(async () => {
+                // Re-add the same task doc
+                const ghostTask = {
                   task: taskText,
                   done: alreadyDone,
                   dueDate: dueDateInput,
-                  createdAt: createdAt.toString()
+                  createdAt: createdAt
                 };
-                this.reAddTask(taskObj);
+                const ghostId = await this.addTaskToFirestore(ghostTask);
+                if (!ghostId) return;
+                this.renderTask({ ...ghostTask, firestoreId: ghostId });
                 alert("You thought it was gone, but was it ever truly finished?");
               }, vanishTime);
             }
           }, vanishTime);
         }
   
-        // Clear input fields: reset task text to blank and due date to today's date
+        // Clear input fields
         taskInputField.value = "";
         dueDateField.value = getTodayDateString();
       } catch (error) {
@@ -331,110 +360,122 @@ const FEATURE_PROBABILITIES = {
       }
     }
   
-    // Save tasks to local storage
-    saveTasks() {
-      this.safeLocalStorageOperation(() => {
-        const tasks = [];
-        document.querySelectorAll("#taskList li").forEach(li => {
-          const task = li.querySelector(".task").textContent;
-          const done = li.querySelector("input[type='checkbox']").checked;
-          const dueDate = li.getAttribute("data-due-date");
-          const createdAt = li.getAttribute("data-created-at");
-          tasks.push({ task, done, dueDate, createdAt });
-        });
-        localStorage.setItem("tasks", JSON.stringify(tasks));
+    // Render a single task in the UI
+    renderTask(taskObj) {
+      const { task, done, dueDate, createdAt, firestoreId } = taskObj;
+  
+      // Create the <li> element
+      const li = document.createElement("li");
+      li.setAttribute("data-firestore-id", firestoreId || "");
+      li.setAttribute("data-due-date", dueDate);
+      li.setAttribute("data-created-at", createdAt);
+  
+      // Format the date for display
+      let dueDateObj = new Date(dueDate + "T12:00:00");
+      let isDone = done ? "checked" : "";
+  
+      li.innerHTML = `
+        <input type="checkbox" ${isDone}>
+        <div class="task-info">
+          <span class="task">${task}</span>
+          <span class="due-date">Due: ${formatDateObj(dueDateObj)}</span>
+        </div>
+      `;
+  
+      // Handle "done" updates
+      const checkbox = li.querySelector("input[type='checkbox']");
+      checkbox.addEventListener("change", async () => {
+        await this.updateTaskStatusInFirestore(firestoreId, checkbox.checked);
       });
-      this.loadTasks();
+  
+      // Append to the list
+      document.getElementById("taskList").appendChild(li);
     }
   
-    // Load tasks from local storage
-    loadTasks() {
-      this.safeLocalStorageOperation(() => {
-        let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
-        const now = Date.now();
+    // Load tasks from Firestore and render them
+    async loadTasks() {
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = "";
   
-        // For tasks older than 24 hours, boost chance to auto-complete (30% chance)
-        tasks = tasks.map(taskObj => {
-          if (!taskObj.done && now - Number(taskObj.createdAt) > 86400000) {
-            if (Math.random() < 0.3) {
-              taskObj.done = true;
-              const alreadyDoneQuote = alreadyDoneQuotes[Math.floor(Math.random() * alreadyDoneQuotes.length)];
-              alert(alreadyDoneQuote);
-            }
-          }
-          return taskObj;
-        });
-        localStorage.setItem("tasks", JSON.stringify(tasks));
+      // Get tasks from Firestore
+      const tasks = await this.fetchTasksFromFirestore();
   
-        // Sort tasks by due date (earliest first), using the "T12:00:00" fix for consistency
-        tasks.sort((a, b) => new Date(a.dueDate + "T12:00:00") - new Date(b.dueDate + "T12:00:00"));
-  
-        const taskList = document.getElementById("taskList");
-        taskList.innerHTML = "";
-  
-        tasks.forEach(taskObj => {
-          const li = document.createElement("li");
-          li.setAttribute("data-due-date", taskObj.dueDate);
-          li.setAttribute("data-created-at", taskObj.createdAt);
-  
-          let dateObj = new Date(taskObj.dueDate + "T12:00:00");
-          let isDone = taskObj.done ? "checked" : "";
-  
-          li.innerHTML = `
-            <input type="checkbox" ${isDone}>
-            <div class="task-info">
-              <span class="task">${taskObj.task}</span>
-              <span class="due-date">Due: ${formatDateObj(dateObj)}</span>
-            </div>
-          `;
-  
-          const checkbox = li.querySelector("input[type='checkbox']");
-          checkbox.addEventListener("change", () => this.saveTasks());
-  
-          taskList.appendChild(li);
-        });
+      // Sort by due date
+      tasks.sort((a, b) => {
+        return new Date(a.dueDate + "T12:00:00") - new Date(b.dueDate + "T12:00:00");
       });
+  
+      // Handle auto-complete for tasks older than 24 hours
+      const now = Date.now();
+      for (let taskObj of tasks) {
+        const { createdAt, firestoreId, done } = taskObj;
+        if (!done && now - Number(createdAt) > 86400000) {
+          // 30% chance to auto-complete
+          if (Math.random() < 0.3) {
+            const alreadyDoneQuote = alreadyDoneQuotes[Math.floor(Math.random() * alreadyDoneQuotes.length)];
+            alert(alreadyDoneQuote);
+            // Mark as done in Firestore
+            await this.updateTaskStatusInFirestore(firestoreId, true);
+            taskObj.done = true;
+          }
+        }
+      }
+  
+      // Now re-fetch tasks if any were updated
+      const updatedTasks = await this.fetchTasksFromFirestore();
+      // Sort again
+      updatedTasks.sort((a, b) => {
+        return new Date(a.dueDate + "T12:00:00") - new Date(b.dueDate + "T12:00:00");
+      });
+  
+      // Render them
+      updatedTasks.forEach(task => {
+        this.renderTask(task);
+      });
+    }
+  
+    // Clear done tasks from both UI and Firestore
+    async clearDoneTasks() {
+      const tasks = document.querySelectorAll("#taskList li");
+      let tasksRemoved = false;
+  
+      for (let li of tasks) {
+        const checkbox = li.querySelector("input[type='checkbox']");
+        if (checkbox && checkbox.checked) {
+          const firestoreId = li.getAttribute("data-firestore-id");
+          // Remove from DOM
+          li.remove();
+          tasksRemoved = true;
+          // Remove from Firestore
+          await this.deleteTaskFromFirestore(firestoreId);
+        }
+      }
+  
+      if (tasksRemoved) {
+        const randomQuote = zenQuotes[Math.floor(Math.random() * zenQuotes.length)];
+        alert(randomQuote);
+      } else {
+        alert("No completed tasks to clear");
+      }
     }
   
     // Initialize event listeners
     initEventListeners() {
       document.addEventListener("DOMContentLoaded", () => {
-        // Auto-fill today's date in the date picker
+        // Auto-fill today's date
         const dateInput = document.getElementById("dueDateInput");
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, "0");
-        const day = String(today.getDate()).padStart(2, "0");
-        dateInput.value = `${year}-${month}-${day}`;
+        dateInput.value = getTodayDateString();
   
-        // Load tasks from storage
+        // Load tasks from Firestore
         this.loadTasks();
   
         // Add button
         const addButton = document.querySelector(".add-btn");
         addButton.addEventListener("click", () => this.addTask());
   
-        // Zen Mode button (clears done tasks)
+        // Zen Mode button (clear done tasks)
         const zenButton = document.querySelector(".zen-btn");
-        zenButton.addEventListener("click", () => {
-          const tasks = document.querySelectorAll("#taskList li");
-          let tasksRemoved = false;
-  
-          tasks.forEach(task => {
-            if (task.querySelector("input[type='checkbox']").checked) {
-              task.remove();
-              tasksRemoved = true;
-            }
-          });
-  
-          if (tasksRemoved) {
-            this.saveTasks();
-            const randomQuote = zenQuotes[Math.floor(Math.random() * zenQuotes.length)];
-            alert(randomQuote);
-          } else {
-            alert("No completed tasks to clear");
-          }
-        });
+        zenButton.addEventListener("click", () => this.clearDoneTasks());
       });
     }
   }
