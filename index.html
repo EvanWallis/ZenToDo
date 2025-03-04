@@ -12,6 +12,7 @@
       <h1>Zen To-Do</h1>
       <p class="subtitle">Mindful task management</p>
       <div class="auth-container">
+        <!-- Sign In/Out Buttons -->
         <button id="signInBtn" class="btn">Sign In with Google</button>
         <button id="signOutBtn" class="btn" style="display: none;">Sign Out</button>
       </div>
@@ -40,16 +41,16 @@
     </footer>
   </div>
 
-  <!-- 1) Load the compat (non-module) versions of Firebase App, Firestore, and Auth -->
+  <!-- Load Firebase compat scripts -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <!-- 2) Firebase config and initialization -->
+  <!-- Firebase configuration and initialization -->
   <script>
-    // Your Firebase config
+    // Your Firebase configuration (replace with your actual values)
     const firebaseConfig = {
-      apiKey: "AIzaSyB...gciyvoRg",   // shortened for brevity
+      apiKey: "AIzaSyBWn5LK770Tw4F3rw5UduO1bW_gciyvoRg",
       authDomain: "zentodo-d442a.firebaseapp.com",
       projectId: "zentodo-d442a",
       storageBucket: "zentodo-d442a.appspot.com",
@@ -59,13 +60,11 @@
 
     // Initialize Firebase (compat style)
     firebase.initializeApp(firebaseConfig);
-
-    // Initialize Firestore (compat style) and Auth
     const db = firebase.firestore();
     const auth = firebase.auth();
   </script>
 
-  <!-- 3) Your main JavaScript file -->
+  <!-- Your main JavaScript file -->
   <script src="script.js"></script>
 </body>
 </html>
