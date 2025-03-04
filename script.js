@@ -1,12 +1,10 @@
 // Configuration Constants
 const FEATURE_PROBABILITIES = {
-    NO_FUTURE_TASK: 0.3,
     TASK_VANISH: 0.2,
-    ALREADY_DONE: 0.2,
-    WRONG_TASK: 0.2
+    ALREADY_DONE: 0.2
   };
   
-  const VANISH_TIMES = [10000, 30000, 3600000, 86400000];
+  const VANISH_TIMES = [10000, 30000, 3600000, 86400000]; // 10 sec, 30 sec, 1 hr, 1 day
   const MAX_TASK_LENGTH = 200;
   
   // Zen Quote Collections
@@ -68,7 +66,7 @@ const FEATURE_PROBABILITIES = {
     "This too shall pass.",
     "The waves may rise, but the ocean remains.",
     "When the clouds disappear, the moon is still there.",
-    "Yesterday’s enlightenment is today’s delusion.",
+    "Yesterday's enlightenment is today's delusion.",
     "A single candle can light a thousand others.",
     "Do not seek to follow in the footsteps of the wise—seek what they sought.",
     "The river does not struggle to reach the sea.",
@@ -118,7 +116,7 @@ const FEATURE_PROBABILITIES = {
     "Do not mistake the finger for the moon, nor the moon for the finger, nor the finger for itself.",
     "The moment you stop looking, you will see it.",
     "There is no enlightenment, and this is it.",
-    "If you think you understand, you don’t. If you don’t think you understand, you might.",
+    "If you think you understand, you don't. If you don't think you understand, you might.",
     "The way out is through. The way through is to realize there was never an 'in.'",
     "There is no solution, because there is no problem.",
     "I have never said a single word, and yet you have heard me.",
@@ -130,7 +128,7 @@ const FEATURE_PROBABILITIES = {
     "The man said, 'I am lost!' The master said, 'Show me your lostness.'",
     "He searched for enlightenment for 20 years. Then he sneezed, and that was that.",
     "The river flows. The mountain sits. The fool tries to trade places with them both.",
-    "He asked, 'What happens after we die?' The master said, 'I don’t know.' 'But you’re a Zen master!' 'Yes, but not a dead one.'",
+    "He asked, 'What happens after we die?' The master said, 'I don't know.' 'But you're a Zen master!' 'Yes, but not a dead one.'",
     "The sound of one hand clapping is the same as the sound of two hands not clapping.",
     "A fool and a wise man both laugh at the same thing. Only the fool thinks it is funny.",
     "A monk asked, 'How do I enter Zen?' The master closed the door.",
@@ -154,7 +152,7 @@ const FEATURE_PROBABILITIES = {
     "'What is the sound of ultimate truth?' The master picked up a bowl and threw it out the window.",
     "A mirror reflects everything, but holds onto nothing.",
     "To reach the farthest place, sit exactly where you are.",
-    "If you want to know the truth, count the hairs on a cat’s tail.",
+    "If you want to know the truth, count the hairs on a cat's tail.",
     "He asked, 'How can I awaken?' The master said, 'Sell your shoes.'",
     "Knock on a door that was never built.",
     "The spoon does not know the taste of soup. The soup does not know the taste of itself.",
@@ -186,39 +184,16 @@ const FEATURE_PROBABILITIES = {
     "Planning is dreaming."
   ];
   
-  const subtleTaskVariants = [
-    "Go near the gym",
-    "Text Mom",
-    "Pick up something random at the store"
-  ];
-  
-  const fullTaskVariants = [
-    "Go to the park",
-    "Forget your essay",
-    "Call yourself",
-    "Embrace stillness",
-    "Sit and breathe",
-    "Listen to silence"
-  ];
-  
-  const wrongTaskQuotes = [
-    "Who decided this was the right task?",
-    "Perhaps you had it backwards.",
-    "A small shift changes everything.",
-    "The illusion of control fades away."
-  ];
-  
   const futureKeywords = ["plan", "start", "future", "tomorrow", "later", "schedule"];
   
   // Zen Task Manager with Philosophical Twists
-  
   class ZenTaskManager {
     constructor() {
       this.initEventListeners();
       this.loadTasks();
     }
   
-    // Safe local storage operation wrapper
+    // Wrapper for localStorage operations
     safeLocalStorageOperation(operation) {
       try {
         return operation();
@@ -234,11 +209,9 @@ const FEATURE_PROBABILITIES = {
       if (!taskText.trim()) {
         throw new Error("Please enter a task");
       }
-      
       if (!dueDateInput) {
         throw new Error("Please enter a due date");
       }
-      
       if (taskText.length > MAX_TASK_LENGTH) {
         throw new Error(`Task must be under ${MAX_TASK_LENGTH} characters`);
       }
@@ -264,63 +237,31 @@ const FEATURE_PROBABILITIES = {
       this.loadTasks();
     }
   
-    // Modify task based on Zen-inspired logic
-    modifyTask(taskText) {
-      const wrongChance = Math.random();
-      
-      if (wrongChance < FEATURE_PROBABILITIES.WRONG_TASK / 2) {
-        // 10% chance for a subtle change
-        return subtleTaskVariants[Math.floor(Math.random() * subtleTaskVariants.length)];
-      } else if (wrongChance < FEATURE_PROBABILITIES.WRONG_TASK) {
-        // Additional 10% chance for a complete flip
-        return fullTaskVariants[Math.floor(Math.random() * fullTaskVariants.length)];
-      }
-      
-      return taskText;
-    }
-  
     // Add a new task
     addTask() {
       const taskInputField = document.getElementById('taskInput');
       const dueDateField = document.getElementById('dueDateInput');
       let taskText = taskInputField.value;
       const dueDateInput = dueDateField.value;
-      
+  
       try {
         // Validate input
         this.validateTask(taskText, dueDateInput);
-        
-        // Check for No Future Feature based on due date
+  
+        let dueDateObj = new Date(dueDateInput);
         let today = new Date();
         today.setHours(0, 0, 0, 0);
-        let dueDateObj = new Date(dueDateInput);
-        
-        if (dueDateObj > today) {
-          const noFutureQuote = noFutureQuotes[Math.floor(Math.random() * noFutureQuotes.length)];
-          alert(noFutureQuote);
-          return;
-        }
-        
-        // Additional No Future tweak: reject tasks that feel "future-oriented"
-        const isFutureOriented = futureKeywords.some(keyword => 
-          taskText.toLowerCase().includes(keyword)
-        );
-        
-        if (isFutureOriented && Math.random() < FEATURE_PROBABILITIES.NO_FUTURE_TASK) {
-          const futureQuote = futureTaskQuotes[Math.floor(Math.random() * futureTaskQuotes.length)];
-          alert(futureQuote);
-          return;
-        }
-        
-        // Modify task if needed
-        taskText = this.modifyTask(taskText);
-        
-        // Determine if task is already done
+  
+        // Instead of rejecting future tasks, we now allow them.
+        // (Optionally, you could alert a Zen quote here if desired.)
+        // Also, if the due date is in the future, we'll increase the vanish chance.
+  
+        // Determine if task is already done (20% chance)
         let alreadyDone = Math.random() < FEATURE_PROBABILITIES.ALREADY_DONE;
-        
+  
         // Record creation time
         let createdAt = Date.now();
-        
+  
         // Create list item
         const li = document.createElement('li');
         li.setAttribute('data-due-date', dueDateInput);
@@ -332,28 +273,27 @@ const FEATURE_PROBABILITIES = {
             <span class="due-date">Due: ${dueDateObj.toLocaleDateString()}</span>
           </div>
         `;
-        
+  
         // Show "Already Done" quote if applicable
         if (alreadyDone) {
           const alreadyDoneQuote = alreadyDoneQuotes[Math.floor(Math.random() * alreadyDoneQuotes.length)];
           alert(alreadyDoneQuote);
         }
-        
-        // Append task to list
+  
+        // Append task to list and save tasks
         document.getElementById('taskList').appendChild(li);
-        
-        // Save tasks
         this.saveTasks();
-        
+  
         // Vanishing Task Feature
-        if (Math.random() < FEATURE_PROBABILITIES.TASK_VANISH) {
+        // If the task is future-dated, increase vanish chance to 50%; otherwise use the default 20%
+        let vanishProbability = dueDateObj > today ? 0.5 : FEATURE_PROBABILITIES.TASK_VANISH;
+        if (Math.random() < vanishProbability) {
           const vanishTime = VANISH_TIMES[Math.floor(Math.random() * VANISH_TIMES.length)];
+          // 50% chance the task will vanish and then reappear as a "ghost"
           const ghost = Math.random() < 0.5;
-          
           setTimeout(() => {
             li.remove();
             this.removeTaskByCreatedAt(createdAt);
-            
             if (ghost) {
               setTimeout(() => {
                 const taskObj = { 
@@ -368,11 +308,10 @@ const FEATURE_PROBABILITIES = {
             }
           }, vanishTime);
         }
-        
+  
         // Clear input fields
         taskInputField.value = '';
         dueDateField.value = '';
-        
       } catch (error) {
         alert(error.message);
       }
@@ -399,8 +338,8 @@ const FEATURE_PROBABILITIES = {
       this.safeLocalStorageOperation(() => {
         let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
         const now = Date.now();
-        
-        // Boost chance to mark old tasks as done
+  
+        // For tasks older than 24 hours, boost chance to mark as done (30% chance)
         tasks = tasks.map(taskObj => {
           if (!taskObj.done && now - Number(taskObj.createdAt) > 86400000) {
             if (Math.random() < 0.3) {
@@ -411,15 +350,14 @@ const FEATURE_PROBABILITIES = {
           }
           return taskObj;
         });
-        
         localStorage.setItem('tasks', JSON.stringify(tasks));
-        
-        // Sort tasks by due date
+  
+        // Sort tasks by due date (earliest first)
         tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-        
+  
         const taskList = document.getElementById('taskList');
         taskList.innerHTML = '';
-        
+  
         tasks.forEach(taskObj => {
           const li = document.createElement('li');
           li.setAttribute('data-due-date', taskObj.dueDate);
@@ -431,10 +369,8 @@ const FEATURE_PROBABILITIES = {
               <span class="due-date">Due: ${new Date(taskObj.dueDate).toLocaleDateString()}</span>
             </div>
           `;
-          
           const checkbox = li.querySelector('input[type="checkbox"]');
           checkbox.addEventListener('change', () => this.saveTasks());
-          
           taskList.appendChild(li);
         });
       });
@@ -444,22 +380,18 @@ const FEATURE_PROBABILITIES = {
     initEventListeners() {
       document.addEventListener('DOMContentLoaded', () => {
         this.loadTasks();
-        
         const addButton = document.querySelector('.add-btn');
         addButton.addEventListener('click', () => this.addTask());
-        
         const zenButton = document.querySelector('.zen-btn');
         zenButton.addEventListener('click', () => {
           const tasks = document.querySelectorAll('#taskList li');
           let tasksRemoved = false;
-          
           tasks.forEach(task => {
             if (task.querySelector('input[type="checkbox"]').checked) {
               task.remove();
               tasksRemoved = true;
             }
           });
-          
           if (tasksRemoved) {
             this.saveTasks();
             const randomQuote = zenQuotes[Math.floor(Math.random() * zenQuotes.length)];
@@ -474,4 +406,3 @@ const FEATURE_PROBABILITIES = {
   
   // Initialize the Zen Task Manager
   new ZenTaskManager();
-  
