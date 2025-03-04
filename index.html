@@ -13,7 +13,7 @@
       <p class="subtitle">Mindful task management</p>
     </header>
     
-    <!-- Updated input group with a due date field -->
+    <!-- Input group with task and due date -->
     <div class="input-group">
       <input type="text" id="taskInput" placeholder="Add a task..." />
       <input type="date" id="dueDateInput" />
@@ -23,7 +23,7 @@
     <div class="task-container">
       <h2>Your Tasks</h2>
       <ul id="taskList">
-        <!-- Tasks will be loaded here from local storage -->
+        <!-- Tasks will be loaded here -->
       </ul>
       
       <button class="btn zen-btn">
@@ -36,6 +36,29 @@
       <p>Find peace in completing one task at a time</p>
     </footer>
   </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js"></script>
+
+  <!-- Firebase configuration and initialization -->
+  <script>
+    // Paste your Firebase config values here:
+    const firebaseConfig = {
+      apiKey: "AIzaSyBWn5LK770Tw4F3rw5UduO1bW_gciyvoRg",
+      authDomain: "zentodo-d442a.firebaseapp.com",
+      projectId: "zentodo-d442a",
+      storageBucket: "zentodo-d442a.appspot.com",
+      messagingSenderId: "387203957441",
+      appId: "1:387203957441:web:3811c117c4a2c5f9760a40"
+    };
+
+    // Initialize Firebase and Firestore
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
+  <!-- Your main JavaScript file -->
   <script src="script.js"></script>
 </body>
 </html>
