@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Zen To-Do</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Manifest for PWA -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- iOS PWA meta tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Zen To-Do">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
 </head>
 <body>
   <div class="container">
@@ -63,6 +73,9 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
   </script>
+
+  <!-- Service Worker Registration -->
+  <script src="sw-register.js"></script>
 
   <!-- Your main JavaScript file -->
   <script src="script.js"></script>
