@@ -2,9 +2,9 @@
     "name": "Zen To-Do",
     "short_name": "ZenToDo",
     "description": "Mindful task management",
-    "start_url": "/ZenToDo/index.html",
+    "start_url": "/ZenToDo/",
+    "scope": "/ZenToDo/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#ffffff"
   }
-  
